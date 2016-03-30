@@ -10,25 +10,26 @@ Controllers in ASP.NET MVC apps should be small and focused on user-interface co
 	
 `View sample files <https://github.com/aspnet/Docs/tree/master/aspnet/mvc/controllers/testing/sample>`_
 
-What is Controller Logic
-------------------------
-*Controllers* define groups of related *actions*. The grouping of related actions into controllers is useful for :doc:`routing </fundamentals/routing>`, applying :doc:`filters <filters>`, and :doc:`injecting common dependencies <dependency-injection>`. 
+Why Test Controllers
+--------------------
+*Controllers* define groups of related *actions*. The grouping of related actions into controllers is useful for :doc:`routing </fundamentals/routing>`, applying :doc:`filters <filters>`, and :doc:`injecting common dependencies <dependency-injection>`. :doc:`Learn more about controllers and actions <actions>`.
 
-:doc:`Learn more about controllers and actions <actions>`.
+Controllers are a central part of any ASP.NET Core MVC application. As such, you should have confidence they behave as intended for your app. Automated tests can provide you with this confidence, and can detect errors before they reach production. It's important to avoid placing unnecessary responsibilities within your controllers, and to ensure your tests focus only on controller responsibilities.
 
 Controller logic should be minimal and not be focused on business logic or infrastructure concerns (for example, data access). Test controller logic, not the framework. Test how the controller *behaves* based on valid or invalid inputs. Test controller responses based on the result of the business operation it performs.
 
 Typical controller responsibilities:
-	- Verify ``ModelState.IsValid``
-	- Return an error response if ``ModelState`` is invalid
-	- Retrieve a business entity from persistence
-	- Perform an action on the business entity
-	- Save the business entity to persistence
-	- Return an appropriate ``IActionResult``
+
+- Verify ``ModelState.IsValid``
+- Return an error response if ``ModelState`` is invalid
+- Retrieve a business entity from persistence
+- Perform an action on the business entity
+- Save the business entity to persistence
+- Return an appropriate ``IActionResult``
 
 Unit Testing
 ------------
-:doc:`Unit testing </testing/unit-testing>` involves testing a part of an app in isolation from its infrastructure and dependencies. When unit testing controller logic, only the contents of a single action should be tested, not the behavior of its dependencies or of the framework itself. As you unit test your controller actions, make sure you focus only on its behavior. Don't unit test global or attribute-based :doc:`filters <filters>`, :doc:`routing </fundamentals/routing>`, or :doc:`model binding </mvc/models/model-binding>`, as part of your action's unit tests. These are all performed by the framework, and testing how they interact with your action is an integration test responsibility. 
+:doc:`Unit testing </testing/unit-testing>` involves testing a part of an app in isolation from its infrastructure and dependencies. When unit testing controller logic, only the contents of a single action is tested, not the behavior of its dependencies or of the framework itself. As you unit test your controller actions, make sure you focus only on its behavior. A controller unit test avoids things like :doc:`filters <filters>`, :doc:`routing </fundamentals/routing>`, or :doc:`model binding </mvc/models/model-binding>`. By focusing on testing just one thing, unit tests are generally simple to write and quick to run. A well-written set of unit tests can be run frequently without much overhead. However, unit tests do not detect issues in the interaction between components, which is the purpose of :ref:`integration testing <integration-testing>`.
 
 If you've writting custom filters, routes, etc, you should unit test them, but not as part of your tests on a particular controller action. They should be tested in isolation.
 
@@ -48,8 +49,8 @@ The controller is following the `explicit dependencies principle <http://deviq.c
 
 The ``HttpPost Index`` method (shown below) should verify:
 
-	- The action method returns a ``ViewResult`` with the appropriate data when ``ModelState.IsValid`` is ``false``
-	- The ``Add`` method on the repository is called and a ``RedirectToActionResult`` is returned with the correct arguments when ``ModelState.IsValid`` is false.
+- The action method returns a ``ViewResult`` with the appropriate data when ``ModelState.IsValid`` is ``false``
+- The ``Add`` method on the repository is called and a ``RedirectToActionResult`` is returned with the correct arguments when ``ModelState.IsValid`` is false.
 
 .. literalinclude:: testing/sample/TestingControllersSample/tests/TestingControllerSample.Tests/UnitTests/HomeControllerIndexPost.cs
   :language: c#
@@ -117,7 +118,7 @@ As stated previously, to test the behavior of the method when ``ModelState`` is 
 
 The second test depends on the repository returning null, so the mock repository is configured to return null. There's no need to create a test database (in memory or otherwise) and construct a query that will return this result - it can be done in a single line as shown.
 
-The last test verifies that the repository's ``Update`` method is called. As we did previously, the mock is called with ``Verifiable`` and then the mocked repository's ``Verify`` method is called to confirm the verifiable method was executed. It's not a unit test responsibility to ensure that the ``Update`` method saved the data; that should be done with an integration test.
+The last test verifies that the repository's ``Update`` method is called. As we did previously, the mock is called with ``Verifiable`` and then the mocked repository's ``Verify`` method is called to confirm the verifiable method was executed. It's not a unit test responsibility to ensure that the ``Update`` method saved the data; that can be done with an integration test.
 
 Integration Testing
 -------------------
@@ -168,6 +169,6 @@ The following set of tests target the ``Create`` method in the :ref:`IdeasContro
   :dedent: 8
   :emphasize-lines: 1-2,9-10,17-18,25-26,33-34,42-43,51
 
-Unlike integration tests of actions that returns HTML views, web API methods that return results can usually be cast to strongly typed objects, as the last test above shows. In this case, the test casts the result to a ``BrainstormSession`` instance, and confirms that the idea was correctly added to its collection of ideas.
+Unlike integration tests of actions that returns HTML views, web API methods that return results can usually be deserialized as strongly typed objects, as the last test above shows. In this case, the test deserializes the result to a ``BrainstormSession`` instance, and confirms that the idea was correctly added to its collection of ideas.
 
 You'll find additional examples of integration tests in this article's `sample project <https://github.com/aspnet/Docs/tree/1.0.0-rc1/aspnet/mvc/controllers/testing/sample>`_.
