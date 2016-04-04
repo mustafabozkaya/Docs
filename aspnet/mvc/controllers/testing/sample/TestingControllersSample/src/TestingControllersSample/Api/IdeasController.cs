@@ -1,7 +1,7 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Microsoft.AspNet.Mvc;
+using TestingControllersSample.ClientModels;
 using TestingControllersSample.Core.Interfaces;
 using TestingControllersSample.Core.Model;
 
@@ -26,24 +26,13 @@ namespace TestingControllersSample.Api
             {
                 return HttpNotFound(sessionId);
             }
-            return new ObjectResult(session.Ideas.Select(i => new
+            return new ObjectResult(session.Ideas.Select(i => new IdeaDTO()
             {
                 id = i.Id,
                 name = i.Name,
                 description = i.Description,
                 dateCreated = i.DateCreated
             }));
-        }
-
-        public class NewIdeaModel
-        {
-            [Required]
-            public string Name { get; set; }
-            [Required]
-            public string Description { get; set; }
-            [Required]
-            [Range(1,1000000)]
-            public int SessionId { get; set; }
         }
 
         [Route("create")]

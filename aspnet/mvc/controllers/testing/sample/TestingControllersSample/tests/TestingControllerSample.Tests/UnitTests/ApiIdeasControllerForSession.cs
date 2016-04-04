@@ -33,7 +33,6 @@ namespace TestingControllerSample.Tests.UnitTests
             var result = Assert.IsType<ObjectResult>(controller.ForSession(testSessionId)).Value as IEnumerable<dynamic>;
             dynamic idea = result.FirstOrDefault();
 
-            // this requires InternalsVisibleTo on the SUT project
             Assert.Equal("One", idea.name);
         }
 

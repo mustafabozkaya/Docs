@@ -3,9 +3,11 @@ using System.Linq;
 using Microsoft.AspNet.Mvc;
 using Moq;
 using TestingControllersSample.Api;
+using TestingControllersSample.ClientModels;
 using TestingControllersSample.Core.Interfaces;
 using TestingControllersSample.Core.Model;
 using Xunit;
+
 namespace TestingControllerSample.Tests.UnitTests
 {
     public class ApiIdeasControllerCreate
@@ -28,7 +30,7 @@ namespace TestingControllerSample.Tests.UnitTests
             mockRepo.Setup(r => r.GetById(testSessionId)).Returns((BrainstormSession)null);
             var controller = new IdeasController(mockRepo.Object);
 
-            var result = Assert.IsType<HttpNotFoundObjectResult>(controller.Create(new IdeasController.NewIdeaModel()));
+            var result = Assert.IsType<HttpNotFoundObjectResult>(controller.Create(new NewIdeaModel()));
         }
 
 
@@ -43,7 +45,7 @@ namespace TestingControllerSample.Tests.UnitTests
             mockRepo.Setup(r => r.GetById(testSessionId)).Returns(testSession);
             var controller = new IdeasController(mockRepo.Object);
 
-            var newIdea = new IdeasController.NewIdeaModel()
+            var newIdea = new NewIdeaModel()
             {
                 Description = testDescription,
                 Name = testName,

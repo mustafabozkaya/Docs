@@ -82,39 +82,23 @@ The app exposes functionality as a web API (a list of ideas associated with a br
 
 .. literalinclude:: testing/sample/TestingControllersSample/src/TestingControllersSample/Api/IdeasController.cs
   :language: c#
-  :emphasize-lines: 20-22,27,29-35,49-51,55,60,70
+  :emphasize-lines: 20-22,27,29-35,38-40,44,49,59
 
-The ``ForSession`` method returns a list of anonymous types, with property names camel cased to match JavaScript conventions. Avoid returning your business domain entities directly via API calls, since frequently they include more data than the API client requires, and they unnecessarily couple your app's internal domain model with the API you expose externally. You can define strongly typed data-transfer objects (DTOs), or just return an anonymous type as this method does. Mapping between domain entities and the types you will return over the wire can be done manually (using a LINQ ``Select`` as shown here) or using a library like `AutoMapper <https://github.com/AutoMapper/AutoMapper>`_
-
-.. note:: Returning anonymous types is a common practice, especially in web API methods, since it's a simple, easy way to control the shape of the output. However, anonymous types are ``internal``, so unit tests that attempt to refer to their properties may encounter errors unless the web project is configured to make its internals visible to the test project.
+The ``ForSession`` method returns a list of ``IdeaDTO`` types, with property names camel cased to match JavaScript conventions. Avoid returning your business domain entities directly via API calls, since frequently they include more data than the API client requires, and they unnecessarily couple your app's internal domain model with the API you expose externally. Mapping between domain entities and the types you will return over the wire can be done manually (using a LINQ ``Select`` as shown here) or using a library like `AutoMapper <https://github.com/AutoMapper/AutoMapper>`_
 
 The unit tests for the ``ForSession`` API:
 
 .. literalinclude:: testing/sample/TestingControllersSample/tests/TestingControllerSample.Tests/UnitTests/ApiIdeasControllerForSession.cs
   :language: c#
-  :emphasize-lines: 14-15,25-26,36-37
+  :emphasize-lines: 14-15,25-26
 
-The second test, ``ReturnsIdeasForSession``, initially fails with this message:
-
-.. code-block: c#
-
-'object' does not contain a definition for 'name'
-
-To correct this error, add an assembly directive specifying that the web project's internals should be visible to the test client. This directive can go into its own file (``InternalsVisibleTo.cs``):
-
-.. literalinclude:: testing/sample/TestingControllersSample/src/TestingControllersSample/InternalsVisibleTo.cs
-  :language: c#
-  :emphasize-lines: 3
-
-With this in place, the test will pass, since the unit test project will have access to the internal-scoped anonymous return type. This is only a problem for unit tests that directly inspect the result - integration tests do not require ``InternalsVisibleTo`` since they get a result from an ``HttpClient``, not a direct method return.
-
-The unit tests for the ``Create``:
+The unit tests for ``Create``:
 
 .. literalinclude:: testing/sample/TestingControllersSample/tests/TestingControllerSample.Tests/UnitTests/ApiIdeasControllerCreate.cs
   :language: c#
-  :emphasize-lines: 13-14,18,23-24,28,35-36
+  :emphasize-lines: 15-16,20,25-26,30,37-38,54,59
 
-As stated previously, to test the behavior of the method when ``ModelState`` is invalid, add a model error to the controller. Don't try to test model validation or model binding in your unit tests - just test your action method's behavior.
+As stated previously, to test the behavior of the method when ``ModelState`` is invalid, add a model error to the controller as part of the test. Don't try to test model validation or model binding in your unit tests - just test your action method's behavior when confronted with a particular ``ModelState`` value.
 
 The second test depends on the repository returning null, so the mock repository is configured to return null. There's no need to create a test database (in memory or otherwise) and construct a query that will return this result - it can be done in a single line as shown.
 
@@ -128,7 +112,7 @@ Although they may still be useful, mock objects are rarely used in integration t
 
 Application State
 ^^^^^^^^^^^^^^^^^
-One important consideration when performing integration testing is how to set your app's state. Tests need to run independent of one another, and so each test should start with the app in a known state. If your app doesn't use a database or have any persistence, this is not an issue. However, most real-world apps persist their state to some kind of data store, so any modifications made by one test could impact another test unless the data store is reset. Using the built-in ``TestServer``, it's very straightforward to host ASP.NET Core apps within our integration tests, but that doesn't necessarily grant access to the data it will use. If you're using an actual database, one approach is to have the app point at a test database, which your tests can access and ensure is reset to a known state before each test executes.
+One important consideration when performing integration testing is how to set your app's state. Tests need to run independent of one another, and so each test should start with the app in a known state. If your app doesn't use a database or have any persistence, this may not be an issue. However, most real-world apps persist their state to some kind of data store, so any modifications made by one test could impact another test unless the data store is reset. Using the built-in ``TestServer``, it's very straightforward to host ASP.NET Core apps within our integration tests, but that doesn't necessarily grant access to the data it will use. If you're using an actual database, one approach is to have the app connect to a test database, which your tests can access and ensure is reset to a known state before each test executes.
 
 In this sample application, I'm using Entity Framework Core's InMemoryDatabase support, so I can't just connect to it from my test project. Instead, I expose an ``InitializeDatabase`` method from the app's ``Startup`` class, which I call when the app starts up if it's in the ``Development`` environment. My integration tests automatically benefit from this as long as they set the environment to ``Development``. I don't have to worry about resetting the database, since the InMemoryDatabase is reset each time the app restarts.
 
