@@ -28,7 +28,6 @@ namespace ErrorHandlingSample
                 app.UseDeveloperExceptionPage();
             }
             app.UseStatusCodePagesWithReExecute("/errors/{0}");
-//            app.UseStatusCodePagesWithRedirects("~/errors/{0}");
 
             app.MapWhen(context => context.Request.Path == "/", HomePage);
 

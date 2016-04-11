@@ -10,14 +10,14 @@ When errors occur in your ASP.NET app, you can handle them in a variety of ways,
 	
 `View sample files <https://github.com/aspnet/Docs/tree/master/aspnet/fundamentals/error-handling/sample>`_
 
-Configuring an error handling page
+Configuring an Error Handling Page
 ----------------------------------
 
 In ASP.NET, you configure the pipeline for each request in the ``Startup`` class's ``Configure()`` method (learn more about :doc:`configuration`). You can add a simple error page, meant only for use during development, very easily. All that's required is to add a dependency on ``Microsoft.AspNet.Diagnostics`` to the project and then add one line to ``Configure()`` in ``Startup.cs``:
 
 .. literalinclude:: error-handling/sample/src/ErrorHandlingSample/Startup.cs
 	:language: csharp
-	:lines: 18-26
+	:lines: 21-29
 	:dedent: 8
 	:emphasize-lines: 6,8
 
@@ -27,7 +27,7 @@ The sample application includes a simple mechanism for creating an exception:
 
 .. literalinclude:: error-handling/sample/src/ErrorHandlingSample/Startup.cs
 	:language: csharp
-	:lines: 35-48
+	:lines: 58-63
 	:dedent: 12
 	:emphasize-lines: 3-6
 
@@ -51,32 +51,6 @@ The next tab shows the contents of the Querystring collection, if any:
 In this case, you can see the value of the ``throw`` parameter that was passed to this request. This request didn't have any cookies, but if it did, they would appear on the Cookies tab. You can see the headers that were passed in the last tab:
 
 .. image:: error-handling/_static/developer-exception-page-headers.png
-
-HTTP 500 errors on Azure
-------------------------
-
-If your app throws an exception before the ``Configure`` method in *Startup.cs* completes, the developer exception page won't be configured. The app deployed to Azure (or another production server) will return an HTTP 500 error with no message details.
-
-The publish wizard in Visual Studio 2015 creates a *web.config* file if you don't have one. If you have a *web.config* file in the *wwwroot* folder, the deploy process inserts the markup into the *web.config* file it generates. 
-
-To get detailed error messages on Azure, add the following *web.config* file to the *wwwroot* folder.
-
-.. warning:: Security warning: Enabling detailed error message can leak critical information from your app. You should never enable detailed error messages on a production app.
-
-.. code-block:: html
-
-	<configuration>
-	   <system.web>
-		  <customErrors mode="Off"/>
-	   </system.web>
-	</configuration>
-
-Exception Filters
------------------
-
-Exception filters can be configured globally or on a per-controller or per-action basis in an :doc:`MVC </mvc/index>` app. These filters handle any unhandled exception that occurs during the execution of a controller action or another filter, and are not called otherwise. Exception filters are detailed in :doc:`filters </mvc/controllers/filters>`.
-
-.. tip:: Exception filters are good for trapping exceptions that occur within MVC actions, but they're not as flexible as error handling middleware. Prefer middleware for the general case, and use filters only where you need to do error handling *differently* based on which MVC action was chosen.
 
 .. _status-code-pages:
 
@@ -136,7 +110,7 @@ If you need to disable status code pages for certain requests, you can do so usi
 Limitations of Error Handling During Client-Server Interaction
 --------------------------------------------------------------
 
-ASP.NET apps have certain limitations to their error handling capabilities, because of the nature of disconnected HTTP requests and responses. Keep these in mind as you design your app's error handling capabilities.
+ASP.NET apps have certain limitations to their error handling capabilities because of the nature of disconnected HTTP requests and responses. Keep these in mind as you design your app's error handling behavior.
 
 #. Once the headers for a response have been sent, you cannot change the response's status code.
 #. If the client disconnects mid-response, you cannot send them the rest of the content of that response.
@@ -150,22 +124,58 @@ Server Error Handling
 
 In addition to ASP.NET, the server hosting your app will perform some error handling. In the case of IIS, this is described `here <https://technet.microsoft.com/en-us/library/cc731570(v=ws.10).aspx>`. For Kestrel, its built-in error handling behavior may be found `here <https://github.com/aspnet/KestrelHttpServer/blob/dev/src/Microsoft.AspNetCore.Server.Kestrel/Http/Frame.cs#L565>`. Requests that are not handled by your app will be handled by the server, and any error that occurs will be handled by the server's error handling. Any custom error pages or error handling middleware or filters you have configured for your app will not affect this behavior.
 
+.. _startup-error-handling:
+
 Startup Error Handling
 ----------------------
 
-Ex. A startup exception could prevent SSL from being enabled (see aspnet/KestrelHttpServer#369).
+One of the trickiest places to handle errors in your app is during its startup. Depending on how far into startup the app makes it before the error occurs, error handling middleware, filters, etc. may or may not be set up to deal with the problem. Errors that occur in your app's startup can also impact server behavior. For example, to enable SSL in Kestrel, one must configure the server with ``app.UseKestrelHttps()``. If an exception happens before this line in ``Startup``, then by default Kestrel will not handle the exception and the process will crash.
 
-Opt-out using UseCaptureStartupErrors.
-(link to this from Startup)
+If you wish to change this behavior (you would prefer the server start, and display the exception in response to requests), you can do so using ``CaptureStartupErrors``.
 
-(below are MVC specific)
+.. code-block:: c#
+	:emphasize-lines: 2
+
+	var builder = new WebHostBuilder()
+		.CaptureStartupErrors(true)
+		.Configure(app => { ... });
+
+.. note:: This behavior was updated between RC1 and RC2.
+
+HTTP 500 Errors on Azure
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If your app throws an exception before the ``Configure`` method in *Startup.cs* completes, the developer exception page won't be configured. The app deployed to Azure (or another production IIS server) will return an HTTP 500 error with no message details.
+
+The publish wizard in Visual Studio 2015 creates a *web.config* file if you don't have one. If you have a *web.config* file in the *wwwroot* folder, the deploy process inserts the markup into the *web.config* file it generates. 
+
+To get detailed error messages on Azure, add the following *web.config* file to the *wwwroot* folder.
+
+.. warning:: Security warning: Enabling detailed error message can leak critical information from your app. You should never enable detailed error messages on a production app.
+
+.. code-block:: html
+
+	<configuration>
+	   <system.web>
+		  <customErrors mode="Off"/>
+	   </system.web>
+	</configuration>
+
+ASP.NET MVC Error Handling
+--------------------------
+
+ASP.NET MVC apps have some additional options when it comes to handling errors, such as configuring exception filters and performing model validation.
+
+Exception Filters
+^^^^^^^^^^^^^^^^^
+
+Exception filters can be configured globally or on a per-controller or per-action basis in an :doc:`MVC </mvc/index>` app. These filters handle any unhandled exception that occurs during the execution of a controller action or another filter, and are not called otherwise. Exception filters are detailed in :doc:`filters </mvc/controllers/filters>`.
+
+.. tip:: Exception filters are good for trapping exceptions that occur within MVC actions, but they're not as flexible as error handling middleware. Prefer middleware for the general case, and use filters only where you need to do error handling *differently* based on which MVC action was chosen.
 
 Handling Model State Errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Model validation occurs prior to each controller action being invoked, and it is the action method’s responsibility to inspect ModelState.IsValid and react appropriately. In many cases, the appropriate reaction is to return some kind of error response, ideally detailing the reason why model validation failed.
+:doc:`Model validation </mvc/models/validation>` occurs prior to each controller action being invoked, and it is the action method’s responsibility to inspect ``ModelState.IsValid`` and react appropriately. In many cases, the appropriate reaction is to return some kind of error response, ideally detailing the reason why model validation failed. 
 
-Some apps will choose to follow a standard convention for dealing with model validation errors, in which case a filter may be an appropriate place to implement such a policy (see ValidateModelAttribute). You should test how your actions behave with valid and invalid model states (learn more about testing controller logic).
-
-Using SerializableError
-
-Validation errors need to be consumable by web API client applications. SerializableError wraps aModelStateDictionary for serialization to XML or Json (or other wire formats) for consumption by client-side code.
+Some apps will choose to follow a standard convention for dealing with model validation errors, in which case a :doc:`filter </mvc/controllers/filters>` may be an appropriate place to implement such a policy. You should test how your actions behave with valid and invalid model states (learn more about :doc:`testing controller logic </mvc/controllers/testing>`).
