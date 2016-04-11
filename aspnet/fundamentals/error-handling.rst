@@ -2,65 +2,66 @@ Error Handling
 ==============
 By `Steve Smith`_
 
-Views frequently share visual and programmatic elements. In this article, you'll learn how to use common layouts, share directives, and run common code before rendering views in your ASP.NET app.
+When errors occur in your ASP.NET app, you can handle them in a variety of ways, as described in this article.
 
 .. contents:: Sections
 	:local:
 	:depth: 1
 	
-`View sample files <https://github.com/aspnet/Docs/tree/master/aspnet/mvc/views/layout/sample>`_
-
-.. _configure-error-page:
+`View sample files <https://github.com/aspnet/Docs/tree/master/aspnet/fundamentals/error-handling/sample>`_
 
 Configuring an error handling page
 ----------------------------------
 
-In ASP.NET 5, you configure the pipeline for each request in the ``Startup`` class's ``Configure()`` method (learn more about :doc:`configuration`). You can add a simple error page, meant only for use during development, very easily. All that's required is to add a dependency on ``Microsoft.AspNet.Diagnostics`` to the project (and a ``using`` statement to ``Startup.cs``), and then add one line to ``Configure()`` in ``Startup.cs``:
+In ASP.NET, you configure the pipeline for each request in the ``Startup`` class's ``Configure()`` method (learn more about :doc:`configuration`). You can add a simple error page, meant only for use during development, very easily. All that's required is to add a dependency on ``Microsoft.AspNet.Diagnostics`` to the project and then add one line to ``Configure()`` in ``Startup.cs``:
 
-.. _diag-startup:
-
-.. literalinclude:: diagnostics/sample/src/DiagDemo/Startup.cs
+.. literalinclude:: error-handling/sample/src/ErrorHandlingSample/Startup.cs
 	:language: csharp
-	:linenos:
-	:emphasize-lines: 2,21
+	:lines: 18-26
+	:dedent: 8
+	:emphasize-lines: 6,8
 
-The above code, which is built from the ASP.NET 5 Empty template, includes a simple mechanism for creating an exception on line 36. If a request includes a non-empty querystring parameter for the variable ``throw`` (e.g. a path of ``/?throw=true``), an exception will be thrown. Line 21 makes the call to ``UseDeveloperExceptionPage()`` to enable the error page middleware. 
+The above code, which is built from the ASP.NET Empty Visual Studio template, includes a check to ensure the environment is development before adding the call to ``UseDeveloperExceptionPage``. This is a good practice, since you typically do not want to share detailed exception information about your application publicly while it is in production. :doc:`Learn more about configuring environments <environments>`.
 
-Notice that the call to ``UseDeveloperExceptionPage()`` is wrapped inside an ``if`` condition that checks the current ``EnvironmentName``. This is a good practice, since you typically do not want to share detailed diagnostic information about your application publicly once it is in production. This check uses the ``ASPNET_ENV`` environment variable. If you are using Visual Studio 2015, you can customize the environment variables used when the application runs in the web application project's properties, under the Debug tab, as shown here:
+The sample application includes a simple mechanism for creating an exception:
 
-.. image:: diagnostics/_static/project-properties-env-vars.png
-	
-Setting the ``ASPNET_ENV`` variable to anything other than Development (e.g. Production) will cause the application not to call ``UseDeveloperExceptionPage()`` and only a HTTP 500 response code with no message details will be sent back to the browser, unless an exception handler is configured such as ``UseExceptionHandler()``.
+.. literalinclude:: error-handling/sample/src/ErrorHandlingSample/Startup.cs
+	:language: csharp
+	:lines: 35-48
+	:dedent: 12
+	:emphasize-lines: 3-6
 
-We will cover the features provided by the error page in the next section (ensure ``ASPNET_ENV`` is reset to Development if you are following along).
+If a request includes a non-empty querystring parameter for the variable ``throw`` (e.g. a path of ``/?throw=true``), an exception will be thrown. If the environment is set to ``Development``, the developer exception page is displayed:
 
-Using the error page during development
----------------------------------------
+.. image:: error-handling/_static/developer-exception-page.png
 
-The default error page will display some useful diagnostics information when an unhandled exception occurs within the web processing pipeline. The error page includes several tabs with information about the exception that was triggered and the request that was made. The first tab shows the stack trace:
+When not in development, it's a good idea to configure friendly pages for common HTTP status codes. You can use :ref:`status code pages <status-code-pages>` for this purpose.
 
-.. image:: diagnostics/_static/errorpage-stack.png
+Using the Developer Exception Page
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The developer exception page displays useful diagnostics information when an unhandled exception occurs within the web processing pipeline. The page includes several tabs with information about the exception that was triggered and the request that was made. The first tab includes a stack trace:
+
+.. image:: error-handling/_static/developer-exception-page.png
 
 The next tab shows the contents of the Querystring collection, if any:
 
-.. image:: diagnostics/_static/errorpage-query.png
+.. image:: error-handling/_static/developer-exception-page-query.png
 
-In this case, you can see the value of the ``throw`` parameter that was passed to this request. This request didn't have any cookies, but if it did, they would appear on the Cookies tab. You can see the headers that were passed, here:
+In this case, you can see the value of the ``throw`` parameter that was passed to this request. This request didn't have any cookies, but if it did, they would appear on the Cookies tab. You can see the headers that were passed in the last tab:
 
-.. image:: diagnostics/_static/errorpage-headers.png
-
-.. note:: In the current pre-release build, the Cookies section of ErrorPage is not yet enabled. `View ErrorPage Source <https://github.com/aspnet/Diagnostics/blob/dev/src/Microsoft.AspNet.Diagnostics/Views/ErrorPage.cshtml>`_.
+.. image:: error-handling/_static/developer-exception-page-headers.png
 
 HTTP 500 errors on Azure
--------------------------
+------------------------
 
-If your app throws an exception before the ``Configure`` method in *Startup.cs* completes, the error page won't be configured. The app deployed to Azure (or another production server) will return an HTTP 500 error with no message details. ASP.NET 5 uses a new configuration model that is not based on *web.config*, and when you create a new web app with Visual Studio 2015, the project no longer contains a *web.config* file. (See `Understanding ASP.NET 5 Web Apps <http://docs.asp.net/en/latest/conceptual-overview/understanding-aspnet5-apps.html>`_.)
+If your app throws an exception before the ``Configure`` method in *Startup.cs* completes, the developer exception page won't be configured. The app deployed to Azure (or another production server) will return an HTTP 500 error with no message details.
 
-The publish wizard in Visual Studio 2015 creates a *web.config* file if you don't have one. If you have a *web.config* file in the *wwwroot* folder, deploy inserts the markup into the the *web.config* file it generates. 
+The publish wizard in Visual Studio 2015 creates a *web.config* file if you don't have one. If you have a *web.config* file in the *wwwroot* folder, the deploy process inserts the markup into the *web.config* file it generates. 
 
 To get detailed error messages on Azure, add the following *web.config* file to the *wwwroot* folder.
 
-.. note:: Security warning: Enabling detailed error message can leak critical information from your app. You should never enable detailed error messages on a production app.
+.. warning:: Security warning: Enabling detailed error message can leak critical information from your app. You should never enable detailed error messages on a production app.
 
 .. code-block:: html
 
@@ -70,48 +71,84 @@ To get detailed error messages on Azure, add the following *web.config* file to 
 	   </system.web>
 	</configuration>
 
-
-
-
-
 Exception Filters
 -----------------
 
-Exception filters can be configured globally or on a per-controller or per-action basis. These filters can react to any unhandled exception that occurs during the execution of a controller action or another filter. Exception filters are detailed in filters.
+Exception filters can be configured globally or on a per-controller or per-action basis in an :doc:`MVC </mvc/index>` app. These filters handle any unhandled exception that occurs during the execution of a controller action or another filter, and are not called otherwise. Exception filters are detailed in :doc:`filters </mvc/controllers/filters>`.
 
-(here is what is currently in filters)
+.. tip:: Exception filters are good for trapping exceptions that occur within MVC actions, but they're not as flexible as error handling middleware. Prefer middleware for the general case, and use filters only where you need to do error handling *differently* based on which MVC action was chosen.
 
-*Exception Filters* implement either the ``IExceptionFilter`` or ``IAsyncExceptionFilter`` interface.
+.. _status-code-pages:
 
-Exception filters handle unhandled exceptions. They are only called when an exception occurs later in the pipeline. They can provide a single location to implement common error handling policies within an app. The framework provides an abstract `ExceptionFilterAttribute <https://docs.asp.net/projects/api/en/latest/autoapi/Microsoft/AspNet/Mvc/Filters/ExceptionFilterAttribute/index.html>`_ that you should be able to subclass for your needs. Exception filters are good for trapping exceptions that occur within MVC actions, but they're not as flexible as error handling middleware. Prefer middleware for the general case, and use filters only where you need to do error handling *differently* based on which MVC action was chosen.
+Configuring Status Code Pages
+-----------------------------
 
-.. tip:: One example where you might need a different form of error handling for different actions would be in an app that exposes both API endpoints and actions that return views/HTML. The API endpoints could return error information as JSON, while the view-based actions could return an error page as HTML.
+By default, your ASP.NET app will not provide a rich status code page for HTTP status codes such as 500 (error) or 404 (not found). You can configure the ``StatusCodePagesMiddleware`` adding this line to the ``Configure`` method:
 
-Exception filters do not have two events (for before and after) - they only implement ``OnException`` (or ``OnExceptionAsync``). The ``ExceptionContext`` provided in the ``OnException`` parameter includes the ``Exception`` that occurred. If you set ``context.Exception`` to null, the effect is that you've handled the exception, so the request will proceed as if it hadn't occurred (generally returning a 200 OK status). The following filter uses a custom developer error view to display details about exceptions that occur when the application is in development:
+.. code-block:: c#
 
-.. literalinclude:: filters/sample/src/FiltersSample/Filters/CustomExceptionFilterAttribute.cs
-  :language: c#
-  :emphasize-lines: 33-34
+	app.UseStatusCodePages();
 
-Configuring an status code pages
---------------------------------
+By default, this middleware adds very simple, text-only handlers for common status codes. For example, the following is the result of a 404 Not Found status code:
 
-You can configure the StatusCodePagesMiddleware by calling:
+.. image:: error-handling/_static/default-404-status-code.png
 
-app.UseStatusCodePages();
+The middleware supports several different extension methods. You can pass it a custom lamba expression:
+
+.. code-block:: c#
+
+	app.UseStatusCodePages(context => 
+		context.HttpContext.Response.SendAsync("Handler, status code: " +
+		context.HttpContext.Response.StatusCode, "text/plain"));
+
+Alternately, you can simply pass it a content type and a format string:
+
+.. code-block:: c#
+
+	app.UseStatusCodePages("text/plain", "Response, status code: {0}");
+
+The middleware can handle redirects (with either relative or absolute URL paths), passing the status code as part of the URL:
+
+.. code-block:: c#
+
+	app.UseStatusCodePagesWithRedirects("~/errors/{0}");
+
+In the above case, the client browser will see a ``302 / Found`` status and will redirect to the URL provided.
+
+Alternately, the middleware can re-execute the request from a new path format string:
+
+.. code-block:: c#
+
+	app.UseStatusCodePagesWithReExecute("/errors/{0}");
+
+The ``UseStatusCodePagesWithReExecute`` method will still return the original status code to the browser, but will also execute the handler given at the path specified.
+
+If you need to disable status code pages for certain requests, you can do so using the following code:
+
+.. code-block:: c#
+
+	var statusCodePagesFeature = context.Features.Get<IStatusCodePagesFeature>();
+	if (statusCodePagesFeature != null)
+	{
+		statusCodePagesFeature.Enabled = false;
+	}
 
 Limitations of Error Handling During Client-Server Interaction
 --------------------------------------------------------------
 
-If the headers are already sent you can't send a different status code
-If the client disconnects you can't send the rest of the content
-An error can always happen one layer below your error handling layer
-Error pages can error too - probably should be static content only
+ASP.NET apps have certain limitations to their error handling capabilities, because of the nature of disconnected HTTP requests and responses. Keep these in mind as you design your app's error handling capabilities.
+
+#. Once the headers for a response have been sent, you cannot change the response's status code.
+#. If the client disconnects mid-response, you cannot send them the rest of the content of that response.
+#. There is always the possibility of an error occuring one layer below your error handling layer.
+#. Don't forget, error handling pages can have errors, too. It's often a good idea for production error pages to consist of purely static content.
+
+Following the above recommendations will help ensure your app remains responsive and is able to gracefully handle errors that may occur.
 
 Server Error Handling
 ---------------------
 
-In addition to ASP.NET, the server hosting your app will perform some error handling. In the case of IIS, this is described (here). For Kestrel, its built-in error handling behavior is described (here). Requests that are handled directly by the server, rather than by ASP.NET, will be handled by the server's error handling. Any custom error pages or error handling middleware or filters you have configured for your app will not affect this behavior.
+In addition to ASP.NET, the server hosting your app will perform some error handling. In the case of IIS, this is described `here <https://technet.microsoft.com/en-us/library/cc731570(v=ws.10).aspx>`. For Kestrel, its built-in error handling behavior may be found `here <https://github.com/aspnet/KestrelHttpServer/blob/dev/src/Microsoft.AspNetCore.Server.Kestrel/Http/Frame.cs#L565>`. Requests that are not handled by your app will be handled by the server, and any error that occurs will be handled by the server's error handling. Any custom error pages or error handling middleware or filters you have configured for your app will not affect this behavior.
 
 Startup Error Handling
 ----------------------
