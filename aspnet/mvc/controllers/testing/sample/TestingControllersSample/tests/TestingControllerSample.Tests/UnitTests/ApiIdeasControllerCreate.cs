@@ -53,7 +53,7 @@ namespace TestingControllerSample.Tests.UnitTests
             };
             mockRepo.Setup(r => r.Update(testSession)).Verifiable();
 
-            var result = Assert.IsType<ObjectResult>(controller.Create(newIdea));
+            var result = Assert.IsType<HttpOkObjectResult>(controller.Create(newIdea));
             var returnSession = Assert.IsType<BrainstormSession>(result.Value);
 
             mockRepo.Verify();

@@ -26,13 +26,14 @@ namespace TestingControllersSample.Api
             {
                 return HttpNotFound(sessionId);
             }
-            return new ObjectResult(session.Ideas.Select(i => new IdeaDTO()
+            var result = session.Ideas.Select(i => new IdeaDTO()
             {
                 id = i.Id,
                 name = i.Name,
                 description = i.Description,
                 dateCreated = i.DateCreated
-            }));
+            }).ToList();
+            return Ok(result);
         }
 
         [Route("create")]
@@ -41,7 +42,7 @@ namespace TestingControllersSample.Api
         {
             if (!ModelState.IsValid)
             {
-                return new BadRequestObjectResult(ModelState);
+                return HttpBadRequest(ModelState);
             }
             var session = _sessionRepository.GetById(model.SessionId);
             if (session == null)
@@ -50,13 +51,13 @@ namespace TestingControllersSample.Api
             }
             var idea = new Idea()
             {
-                DateCreated = DateTime.Now,
+                DateCreated = DateTimeOffset.Now,
                 Description = model.Description,
                 Name = model.Name
             };
             session.AddIdea(idea);
             _sessionRepository.Update(session);
-            return new ObjectResult(session);
+            return Ok(session);
         }
     }
 }

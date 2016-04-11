@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.AspNet.Mvc;
 using Moq;
 using TestingControllersSample.Api;
+using TestingControllersSample.ClientModels;
 using TestingControllersSample.Core.Interfaces;
 using TestingControllersSample.Core.Model;
 using Xunit;
@@ -30,8 +31,9 @@ namespace TestingControllerSample.Tests.UnitTests
             mockRepo.Setup(r => r.GetById(testSessionId)).Returns(GetTestSession());
             var controller = new IdeasController(mockRepo.Object);
 
-            var result = Assert.IsType<ObjectResult>(controller.ForSession(testSessionId)).Value as IEnumerable<dynamic>;
-            dynamic idea = result.FirstOrDefault();
+            var result = Assert.IsType<HttpOkObjectResult>(controller.ForSession(testSessionId));
+            var returnValue = Assert.IsType<List<IdeaDTO>>(result.Value);
+            var idea = returnValue.FirstOrDefault();
 
             Assert.Equal("One", idea.name);
         }

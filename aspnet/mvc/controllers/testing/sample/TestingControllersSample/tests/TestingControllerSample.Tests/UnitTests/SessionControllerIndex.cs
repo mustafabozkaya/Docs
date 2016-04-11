@@ -15,7 +15,7 @@ namespace TestingControllerSample.Tests.UnitTests
         [Fact]
         public void ReturnsARedirectToIndexHomeWhenIdIsNull()
         {
-            var controller = new SessionController(null);
+            var controller = new SessionController(sessionRepository:null);
 
             var result = Assert.IsType<RedirectToActionResult>(controller.Index(null));
             Assert.Equal("Home", result.ControllerName);

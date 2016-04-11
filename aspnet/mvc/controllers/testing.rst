@@ -82,7 +82,7 @@ The app exposes functionality as a web API (a list of ideas associated with a br
 
 .. literalinclude:: testing/sample/TestingControllersSample/src/TestingControllersSample/Api/IdeasController.cs
   :language: c#
-  :emphasize-lines: 20-22,27,29-35,38-40,44,49,59
+  :emphasize-lines: 20-22,27,29-36,39-41,45,50,60
 
 The ``ForSession`` method returns a list of ``IdeaDTO`` types, with property names camel cased to match JavaScript conventions. Avoid returning your business domain entities directly via API calls, since frequently they include more data than the API client requires, and they unnecessarily couple your app's internal domain model with the API you expose externally. Mapping between domain entities and the types you will return over the wire can be done manually (using a LINQ ``Select`` as shown here) or using a library like `AutoMapper <https://github.com/AutoMapper/AutoMapper>`_
 
@@ -90,7 +90,7 @@ The unit tests for the ``ForSession`` API:
 
 .. literalinclude:: testing/sample/TestingControllersSample/tests/TestingControllerSample.Tests/UnitTests/ApiIdeasControllerForSession.cs
   :language: c#
-  :emphasize-lines: 14-15,25-26
+  :emphasize-lines: 15-16,26-27
 
 The unit tests for ``Create``:
 
@@ -139,7 +139,7 @@ To correct this issue, you need to configure the server to use the ``Application
 
 .. literalinclude:: testing/sample/TestingControllersSample/tests/TestingControllerSample.Tests/IntegrationTests/HomeControllerIndex.cs
   :language: c#
-  :emphasize-lines: 20,22-32,37-38
+  :emphasize-lines: 20,22-32,36-37,42
 
 In the test above, the ``responseString`` gets the actual rendered HTML from the View, which can be inspected to confirm it contains expected results.
 

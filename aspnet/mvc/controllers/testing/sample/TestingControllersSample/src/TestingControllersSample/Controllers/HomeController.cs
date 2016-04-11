@@ -46,7 +46,7 @@ namespace TestingControllersSample.Controllers
             }
             _sessionRepository.Add(new BrainstormSession()
             {
-                DateCreated = DateTime.Now,
+                DateCreated = DateTimeOffset.Now,
                 Name = model.SessionName
             });
             return new RedirectToActionResult("Index", "Home", null);
