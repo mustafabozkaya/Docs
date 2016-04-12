@@ -8,13 +8,12 @@ Controllers in ASP.NET MVC apps should be small and focused on user-interface co
 	:local:
 	:depth: 1
 	
-`View sample files <https://github.com/aspnet/Docs/tree/master/aspnet/mvc/controllers/testing/sample>`_
+`View or download sample from GitHub <https://github.com/aspnet/Docs/tree/master/aspnet/mvc/controllers/testing/sample>`_
 
 Why Test Controllers
 --------------------
-*Controllers* define groups of related *actions*. The grouping of related actions into controllers is useful for :doc:`routing </fundamentals/routing>`, applying :doc:`filters <filters>`, and :doc:`injecting common dependencies <dependency-injection>`. :doc:`Learn more about controllers and actions <actions>`.
 
-Controllers are a central part of any ASP.NET Core MVC application. As such, you should have confidence they behave as intended for your app. Automated tests can provide you with this confidence, and can detect errors before they reach production. It's important to avoid placing unnecessary responsibilities within your controllers, and to ensure your tests focus only on controller responsibilities.
+Controllers are a central part of any ASP.NET Core MVC application. As such, you should have confidence they behave as intended for your app. Automated tests can provide you with this confidence and can detect errors before they reach production. It's important to avoid placing unnecessary responsibilities within your controllers and ensure your tests focus only on controller responsibilities.
 
 Controller logic should be minimal and not be focused on business logic or infrastructure concerns (for example, data access). Test controller logic, not the framework. Test how the controller *behaves* based on valid or invalid inputs. Test controller responses based on the result of the business operation it performs.
 
@@ -29,6 +28,7 @@ Typical controller responsibilities:
 
 Unit Testing
 ------------
+
 :doc:`Unit testing </testing/unit-testing>` involves testing a part of an app in isolation from its infrastructure and dependencies. When unit testing controller logic, only the contents of a single action is tested, not the behavior of its dependencies or of the framework itself. As you unit test your controller actions, make sure you focus only on its behavior. A controller unit test avoids things like :doc:`filters <filters>`, :doc:`routing </fundamentals/routing>`, or :doc:`model binding </mvc/models/model-binding>`. By focusing on testing just one thing, unit tests are generally simple to write and quick to run. A well-written set of unit tests can be run frequently without much overhead. However, unit tests do not detect issues in the interaction between components, which is the purpose of :ref:`integration testing <integration-testing>`.
 
 If you've writting custom filters, routes, etc, you should unit test them, but not as part of your tests on a particular controller action. They should be tested in isolation.
@@ -108,12 +108,14 @@ The last test verifies that the repository's ``Update`` method is called. As we 
 
 Integration Testing
 -------------------
+
 :doc:`Integration testing </testing/integration-testing>` is done to ensure separate modules within your app work correctly together. Generally, anything you can test with a unit test, you can also test with an integration test, but the reverse isn't true. However, integration tests tend to be much slower than unit tests. Thus, it's best to test whatever you can with unit tests, and use integration tests for scenarios that involve multiple collaborators.
 
 Although they may still be useful, mock objects are rarely used in integration tests. In unit testing, mock objects are an effective way to control how collaborators outside of the unit being tested should behave for the purposes of the test. In an integration test, real collaborators are used to confirm the whole subsystem works together correctly.
 
 Application State
 ^^^^^^^^^^^^^^^^^
+
 One important consideration when performing integration testing is how to set your app's state. Tests need to run independent of one another, and so each test should start with the app in a known state. If your app doesn't use a database or have any persistence, this may not be an issue. However, most real-world apps persist their state to some kind of data store, so any modifications made by one test could impact another test unless the data store is reset. Using the built-in ``TestServer``, it's very straightforward to host ASP.NET Core apps within our integration tests, but that doesn't necessarily grant access to the data it will use. If you're using an actual database, one approach is to have the app connect to a test database, which your tests can access and ensure is reset to a known state before each test executes.
 
 In this sample application, I'm using Entity Framework Core's InMemoryDatabase support, so I can't just connect to it from my test project. Instead, I expose an ``InitializeDatabase`` method from the app's ``Startup`` class, which I call when the app starts up if it's in the ``Development`` environment. My integration tests automatically benefit from this as long as they set the environment to ``Development``. I don't have to worry about resetting the database, since the InMemoryDatabase is reset each time the app restarts.
@@ -128,6 +130,7 @@ You'll see the ``GetTestSession`` method used frequently in the integration test
 
 Accessing Views
 ^^^^^^^^^^^^^^^
+
 Each integration test class configures the ``TestServer`` that will run the ASP.NET Core app. By default, ``TestServer`` hosts the web app in the folder where it's running - in this case, the test project folder. Thus, when you attempt to test controller actions that return ``ViewResult``, you may see this error:
 
 .. code-block:: c#
@@ -145,6 +148,7 @@ In the test above, the ``responseString`` gets the actual rendered HTML from the
 
 API Methods
 ^^^^^^^^^^^
+
 If your app exposes web APIs, it's a good idea to have automated tests confirm they execute as expected. The built-in ``TestServer`` makes it easy to test web APIs. If your API methods are using model binding, you should always check ``ModelState.IsValid``, and integration tests are the right place to confirm that your model validation is working properly. 
 
 The following set of tests target the ``Create`` method in the :ref:`IdeasController <ideas-controller>` class shown above:
